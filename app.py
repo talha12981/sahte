@@ -45,5 +45,5 @@ def requestCheck():
 
 
 #app.run(host="0.0.0.0", port=5005, debug=True,threaded=True)
-
-app.run(threaded=True)
+if __name__ == '__main__':
+    app.run(threaded=True)
