@@ -1,9 +1,5 @@
 import numpy as np
-import os
-import PIL
 import tensorflow as tf
-from tensorflow.keras.models import model_from_json
-import pickle
 
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -23,8 +19,8 @@ class CNNModel():
 
     def __label_img(self):
         data_dir = pathlib.Path(self.__TRAIN_DIR)
-#        image_count = len(list(data_dir.glob('*/*.jpg')))
- #       print(image_count)
+        image_count = len(list(data_dir.glob('*/*.jpg')))
+        print(image_count)
   
         train_ds = tf.keras.preprocessing.image_dataset_from_directory(
         data_dir,
@@ -47,21 +43,6 @@ class CNNModel():
     def create_model(self,activation,optimizer):
         train_ds, val_ds = self.__label_img()
         class_names = train_ds.class_names
-   #     print(class_names)
-
-
-  #      plt.figure(figsize=(10, 10))
-   ##        for i in range(9):
-     #           ax = plt.subplot(3, 3, i + 1)
-      #          plt.imshow(images[i].numpy().astype("uint8"))
-       #         plt.title(class_names[labels[i]])
-        #        plt.axis("off")
-
-        #for image_batch, labels_batch in train_ds:
-         #   print(image_batch.shape)
-          #  print(labels_batch.shape)
-           # break
-
         AUTOTUNE = tf.data.AUTOTUNE
 
         train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
@@ -97,14 +78,7 @@ class CNNModel():
         epochs=self.__epochs
         )
 
-        # serialize model to JSON
-        model_json = model.to_json()
-        with open("Denomination_Model.json", "w") as json_file:
-            json_file.write(model_json)
-        # serialize weights to HDF5
-        model.save_weights("model.h5")
-        print("Saved model to disk")
-
+        model.save("CNN_Model")
 
         acc = history.history['accuracy']
         val_acc = history.history['val_accuracy']
@@ -112,32 +86,10 @@ class CNNModel():
         loss = history.history['loss']
         val_loss = history.history['val_loss']
 
-        epochs_range = range(epochs)
-
-#        plt.figure(figsize=(8, 8))
- #       plt.subplot(1, 2, 1)
-  #      plt.plot(epochs_range, acc, label='Training Accuracy')
-   #     plt.plot(epochs_range, val_acc, label='Validation Accuracy')
-    #    plt.legend(loc='lower right')
-     #   plt.title('Training and Validation Accuracy')
-
-#        plt.subplot(1, 2, 2)
- #       plt.plot(epochs_range, loss, label='Training Loss')
-  #      plt.plot(epochs_range, val_loss, label='Validation Loss')
-   #     plt.legend(loc='upper right')
-    #    plt.title('Training and Validation Loss')
-     #   plt.show()
-
+        epochs_range = range(self.__epochs)
 
     def Denomation_Detector(self, imgPath):
-                # load json and create model
-        json_file = open('Denomination_Model.json', 'r')
-        loaded_model_json = json_file.read()
-        json_file.close()
-        loaded_model = model_from_json(loaded_model_json)
-        # load weights into new model
-        loaded_model.load_weights("model.h5")
-#        print("Loaded model from disk")
+        loaded_model = tf.keras.models.load_model('CNN_Model')
 
         img = keras.preprocessing.image.load_img(
             imgPath, target_size=(self.__IMG_SIZE, self.__IMG_SIZE)
@@ -155,3 +107,8 @@ class CNNModel():
         #)
 
         return class_names[np.argmax(score)]
+
+
+#if __name__=="__main__":
+ #   cnn= CNNModel()
+  #  print(cnn.Denomation_Detector('fake1_3_1.jpg'))
