@@ -1,6 +1,6 @@
 Flask==1.1.2
 numpy==1.16.6
-opencv-python==4.5.1.48
+opencv-python-headless
 Werkzeug==1.0.1
 Pillow==8.1.0
 scikit_learn==0.24.1
