@@ -10,6 +10,10 @@ from ImageProcess import ImageProcess
 from SVM import SVM
 import cv2
 
+
+cnn = CNNModel()
+svm = SVM()
+
 app = flask.Flask(__name__)
 app.secret_key="key"
 @app.route('/', methods = ['GET', 'POST'])
@@ -30,12 +34,11 @@ def requestCheck():
             fd= faceDetection()
             rot_img = fd.face_detection(filename)
             if(str(rot_img)!="NO"):
-                cnn = CNNModel()
                 denomination = cnn.Denomation_Detector(filename)
                 if(denomination=="1000"):
                     ip= ImageProcess(denomination)
                     features = ip.features_extraction(filename)
-                    svm = SVM()
+                   
                     prediction = svm.predict(features)
                     return "The Currency Note Denomination is "+denomination+" and it is "+prediction
                 else:
@@ -44,6 +47,4 @@ def requestCheck():
                 return "No Face is Detected"
 
 
-#app.run(host="0.0.0.0", port=5005, debug=True,threaded=True)
-if __name__ == '__main__':
-    app.run(threaded=True)
+app.run(host="0.0.0.0", port=5005, debug=True,threaded=True)
