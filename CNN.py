@@ -1,20 +1,30 @@
 import numpy as np
 import tensorflow as tf
+import pickle
 
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
+from keras_pickle_wrapper import KerasPickleWrapper
 
 import pathlib
 
 class CNNModel():
     def __init__(self,TRAIN_DIR='',IMG_SIZE=180,LR=0.1,batch_size=10,validation_split=0.1,epochs=10):
-        self.__TRAIN_DIR=TRAIN_DIR
+        if(TRAIN_DIR==''):
+            pkl_filename = "CNN_Model.pkl"
+            # Load from file
+            with open(pkl_filename, 'rb') as file:
+                self.__Model = pickle.load(file)
+        
+        else:
+            self.__TRAIN_DIR=TRAIN_DIR
+            self.__LR=LR
+            self.__batch_size=batch_size
+            self.__validation_split=validation_split
+            self.__epochs=epochs
         self.__IMG_SIZE=IMG_SIZE
-        self.__LR=LR
-        self.__batch_size=batch_size
-        self.__validation_split=validation_split
-        self.__epochs=epochs
+            
 
 
     def __label_img(self):
@@ -43,6 +53,7 @@ class CNNModel():
     def create_model(self,activation,optimizer):
         train_ds, val_ds = self.__label_img()
         class_names = train_ds.class_names
+        
         AUTOTUNE = tf.data.AUTOTUNE
 
         train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
@@ -70,26 +81,53 @@ class CNNModel():
                     metrics=['accuracy'])
 
         model.summary()
-
-        
-        history = model.fit(
+        mw = KerasPickleWrapper(model)
+        mw().fit(
         train_ds,
         validation_data=val_ds,
         epochs=self.__epochs
         )
+        
+        
+        #history = model.fit(
+        #train_ds,
+        ##validation_data=val_ds,
+        #epochs=self.__epochs
+        #)
 
-        model.save("CNN_Model")
+        #model.save("CNN_Model")
 
-        acc = history.history['accuracy']
-        val_acc = history.history['val_accuracy']
+        data = pickle.dumps(mw)
+        mw2 = pickle.loads(data)
+        img = keras.preprocessing.image.load_img(
+            'fake1_3_1.jpg', target_size=(self.__IMG_SIZE, self.__IMG_SIZE)
+        )
+        img_array = keras.preprocessing.image.img_to_array(img)
+        img_array = tf.expand_dims(img_array, 0) # Create a batch
+        
+        output_1 = mw().predict(img_array)
+        pkl_filename = "MODELLL.pkl"
+        with open(pkl_filename, 'wb') as file:
+            pickle.dump(mw, file)
 
-        loss = history.history['loss']
-        val_loss = history.history['val_loss']
 
-        epochs_range = range(self.__epochs)
+
+
+        #acc = history.history['accuracy']
+        #val_acc = history.history['val_accuracy']
+
+        #loss = history.history['loss']
+        #val_loss = history.history['val_loss']
+
+        #epochs_range = range(self.__epochs)
 
     def Denomation_Detector(self, imgPath):
-        loaded_model = tf.keras.models.load_model('CNN_Model')
+        
+
+        pkl_filename = "CNN_Model.pkl"
+        # Load from file
+        with open(pkl_filename, 'rb') as file:
+            model = pickle.load(file)
 
         img = keras.preprocessing.image.load_img(
             imgPath, target_size=(self.__IMG_SIZE, self.__IMG_SIZE)
@@ -97,8 +135,9 @@ class CNNModel():
         img_array = keras.preprocessing.image.img_to_array(img)
         img_array = tf.expand_dims(img_array, 0) # Create a batch
 
-        predictions = loaded_model.predict(img_array)
-        score = tf.nn.softmax(predictions[0])
+        output_1 = self.__Model().predict(img_array)
+
+        score = tf.nn.softmax(output_1)
         class_names = ['10','100','1000','20','50','500','5000']
         
         #print(
@@ -110,5 +149,6 @@ class CNNModel():
 
 
 #if __name__=="__main__":
- #   cnn= CNNModel()
-  #  print(cnn.Denomation_Detector('fake1_3_1.jpg'))
+    #cnn= CNNModel('')
+    #print(cnn.Denomation_Detector('fake1_3_1.jpg'))
+    #print(cnn.Denomation_Detector('fake1_3_1.jpg'))
