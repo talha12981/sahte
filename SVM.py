@@ -1,4 +1,5 @@
 from pathlib import Path
+import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import svm, metrics, datasets
 import pickle
@@ -12,7 +13,23 @@ from ImageProcess import ImageProcess
 class SVM():
 
     def __init__(self, dir=''):
-            self.__dir=dir
+            if(dir != ''):
+                self.__dir=dir
+            else:
+                pkl_watermark ="watermark_model.pkl"
+                # Load from file
+                with open(pkl_watermark, 'rb') as file:
+                    self.__water_model = pickle.load(file)
+
+                pkl_micro = "micro_model.pkl"
+                # Load from file
+                with open(pkl_micro, 'rb') as file:
+                    self.__micro_model = pickle.load(file)
+
+                pkl_latent = "latent_model.pkl"
+                # Load from file
+                with open(pkl_latent, 'rb') as file:
+                    self.__latent_model = pickle.load(file)
 
     def __load_data(self):
         image_dir = Path(self.__dir)
@@ -58,31 +75,22 @@ class SVM():
 
 
     def predict(self,features):
-        pkl_watermark ="watermark_model.pkl"
-        # Load from file
-        with open(pkl_watermark, 'rb') as file:
-            water_model = pickle.load(file)
+        
             
         # Calculate the accuracy score and predict target values
-        wat = water_model.predict(features[0].flatten().reshape(1,-1))
+        wat = self.__water_model.predict(features[0].flatten().reshape(1,-1))
         
         
-        pkl_micro = "micro_model.pkl"
-        # Load from file
-        with open(pkl_micro, 'rb') as file:
-            micro_model = pickle.load(file)
+        
             
         # Calculate the accuracy score and predict target values
-        mic = micro_model.predict(features[1].flatten().reshape(1,-1))
+        mic = self.__micro_model.predict(features[1].flatten().reshape(1,-1))
         
         
-        pkl_latent = "latent_model.pkl"
-        # Load from file
-        with open(pkl_latent, 'rb') as file:
-            latent_model = pickle.load(file)
+        
             
         # Calculate the accuracy score and predict target values
-        lat = latent_model.predict(features[2].flatten().reshape(1,-1))
+        lat = self.__latent_model.predict(features[2].flatten().reshape(1,-1))
 
         if(wat+mic+lat>1):
             return "Original Note"
